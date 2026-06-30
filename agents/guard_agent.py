@@ -72,7 +72,11 @@ def log_audit_event_tool(
     try:
         parsed_type = AuditEventType(normalized)
     except ValueError:
-        parsed_type = AuditEventType(event_type)
+        try:
+            parsed_type = AuditEventType(event_type)
+        except ValueError:
+            logger.warning("Guard: unknown event_type %r, falling back to data_sent_to_agent", event_type)
+            parsed_type = AuditEventType.DATA_SENT_TO_AGENT
     event = AuditEvent(
         event_type=parsed_type, description=description, data_scope=data_scope
     )
