@@ -1,0 +1,71 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.dist-info/
+venv/
+.venv/
+env/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Node / Frontend
+node_modules/
+dist/
+.next/
+out/
+.nuxt/
+.cache/
+*.tsbuildinfo
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Secrets & credentials
+*.pem
+*.key
+*.p12
+*.pfx
+service-account*.json
+credentials.json
+token.json
+gcloud-credentials.json
+
+# Docker
+.dockerignore
+
+# Misc
+.claude/
