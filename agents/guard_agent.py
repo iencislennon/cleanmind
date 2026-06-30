@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import uuid
 
 from google.adk.agents import Agent
@@ -56,13 +57,24 @@ def _get_or_create_report(session_id: str) -> GuardReport:
 # ──────────────────────────────────────────────────────────────────
 
 
+def _normalize_event_type(event_type: str) -> str:
+    """Convert PascalCase or UPPER_CASE to snake_case so LLM output tolerantly maps to enum values."""
+    s = re.sub(r"(?<!^)(?=[A-Z])", "_", event_type).lower()
+    return s
+
+
 def log_audit_event_tool(
     session_id: str, event_type: str, description: str, data_scope: str
 ) -> str:
     """ADK Tool: записывает событие в журнал аудита сессии."""
     report = _get_or_create_report(session_id)
+    normalized = _normalize_event_type(event_type)
+    try:
+        parsed_type = AuditEventType(normalized)
+    except ValueError:
+        parsed_type = AuditEventType(event_type)
     event = AuditEvent(
-        event_type=AuditEventType(event_type), description=description, data_scope=data_scope
+        event_type=parsed_type, description=description, data_scope=data_scope
     )
     report.events.append(event)
     logger.info("Guard [%s]: %s — %s", session_id, event_type, description)
