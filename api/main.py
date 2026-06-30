@@ -21,6 +21,14 @@ from __future__ import annotations
 import logging
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Google ADK reads GOOGLE_API_KEY; alias from GEMINI_API_KEY if set
+if not os.getenv("GOOGLE_API_KEY") and os.getenv("GEMINI_API_KEY"):
+    os.environ["GOOGLE_API_KEY"] = os.environ["GEMINI_API_KEY"]
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 

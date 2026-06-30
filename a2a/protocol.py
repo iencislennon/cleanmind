@@ -130,6 +130,7 @@ def build_a2a_router(agent: Agent, agent_name: AgentName) -> APIRouter:
     """
     router = APIRouter()
     runner = InMemoryRunner(agent=agent, app_name=f"clearmind_{agent_name.value}")
+    runner.auto_create_session = True
 
     @router.get(A2A_HEALTH_ENDPOINT)
     async def health() -> dict:
