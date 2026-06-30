@@ -11,10 +11,10 @@ interface PlanPageProps {
 }
 
 const STATUS_LABEL: Record<PlanStep['status'], string> = {
-  pending: 'Ожидает решения',
-  accepted: '✓ Принято',
-  rejected: '✗ Отклонено',
-  completed: '✔ Выполнено',
+  pending: 'Awaiting decision',
+  accepted: '✓ Accepted',
+  rejected: '✗ Declined',
+  completed: '✔ Completed',
 };
 
 const STATUS_TAG: Record<PlanStep['status'], string> = {
@@ -50,7 +50,7 @@ function StepCard({
       });
       onUpdate({ ...step, status: decision });
     } catch (err) {
-      alert(`Ошибка: ${err instanceof Error ? err.message : 'неизвестно'}`);
+      alert(`Error: ${err instanceof Error ? err.message : 'unknown error'}`);
     } finally {
       setLoading(null);
     }
@@ -82,21 +82,21 @@ function StepCard({
                 disabled={loading !== null}
                 onClick={() => decide('accepted')}
               >
-                {loading === 'accepted' ? <span className="spinner" /> : '✓ Принять'}
+                {loading === 'accepted' ? <span className="spinner" /> : '✓ Accept'}
               </button>
               <button
                 className="btn btn-black btn-sm"
                 disabled={loading !== null}
                 onClick={() => decide('completed')}
               >
-                {loading === 'completed' ? <span className="spinner" /> : '✔ Выполнено'}
+                {loading === 'completed' ? <span className="spinner" /> : '✔ Mark done'}
               </button>
               <button
                 className="btn btn-ghost-red btn-sm"
                 disabled={loading !== null}
                 onClick={() => decide('rejected')}
               >
-                {loading === 'rejected' ? <span className="spinner" /> : '✗ Отклонить'}
+                {loading === 'rejected' ? <span className="spinner" /> : '✗ Decline'}
               </button>
             </div>
           )}
@@ -108,7 +108,7 @@ function StepCard({
               disabled={loading !== null}
               onClick={() => decide('completed')}
             >
-              {loading === 'completed' ? <span className="spinner" /> : 'Отметить выполненным'}
+              {loading === 'completed' ? <span className="spinner" /> : 'Mark as completed'}
             </button>
           )}
         </div>
@@ -137,11 +137,11 @@ export function PlanPage({ sessionId, plan, onPlanUpdate, coachMessage, onGoToCh
           <div className="card" style={{ textAlign: 'center', padding: '64px 40px' }}>
             <span style={{ fontSize: 56, display: 'block', marginBottom: 24 }}>📋</span>
             <h2 className="text-heading-sm" style={{ marginBottom: 16 }}>
-              План пока не структурирован
+              No structured plan yet
             </h2>
             <p className="text-subheading" style={{ maxWidth: 440, margin: '0 auto 32px' }}>
-              Coach Agent возвращает рекомендации в виде текста. Перейди в чат, чтобы получить план
-              или задать уточняющие вопросы.
+              Coach Agent returns recommendations as text. Go to chat to get a plan
+              or ask follow-up questions.
             </p>
             {coachMessage && (
               <div
@@ -162,7 +162,7 @@ export function PlanPage({ sessionId, plan, onPlanUpdate, coachMessage, onGoToCh
             )}
             <div className="btn-pair" style={{ justifyContent: 'center' }}>
               <button className="btn btn-yellow" onClick={onGoToChat}>
-                Открыть чат с Coach →
+                Open chat with Coach →
               </button>
             </div>
           </div>
@@ -184,13 +184,13 @@ export function PlanPage({ sessionId, plan, onPlanUpdate, coachMessage, onGoToCh
         {/* Header */}
         <div className="flex items-center justify-between" style={{ marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
           <div>
-            <h2 className="text-heading-sm" style={{ marginBottom: 6 }}>Твой план действий</h2>
+            <h2 className="text-heading-sm" style={{ marginBottom: 6 }}>Your action plan</h2>
             <p className="text-subheading">
-              {acceptedCount} из {localPlan.steps.length} шагов принято · {completedCount} выполнено
+              {acceptedCount} of {localPlan.steps.length} steps accepted · {completedCount} completed
             </p>
           </div>
           <button className="btn btn-ghost btn-sm" onClick={onGoToChat}>
-            💬 Обсудить с Coach
+            💬 Discuss with Coach
           </button>
         </div>
 
@@ -232,7 +232,7 @@ export function PlanPage({ sessionId, plan, onPlanUpdate, coachMessage, onGoToCh
         {/* Summary block */}
         {localPlan.summary && (
           <div className="card" style={{ marginTop: 32 }}>
-            <p className="text-body" style={{ fontWeight: 600, marginBottom: 12 }}>Общее резюме Coach Agent</p>
+            <p className="text-body" style={{ fontWeight: 600, marginBottom: 12 }}>Coach Agent summary</p>
             <p className="text-body" style={{ lineHeight: 1.7, opacity: 0.8 }}>{localPlan.summary}</p>
           </div>
         )}

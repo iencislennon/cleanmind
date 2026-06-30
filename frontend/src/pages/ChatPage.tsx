@@ -26,7 +26,7 @@ export function ChatPage({ sessionId, initialMessages, onMessagesUpdate, initial
     return [{
       id: nextId(),
       role: 'coach' as const,
-      text: 'Привет! Я Coach Agent. Я проанализировал твои данные экранного времени. Спроси меня о результатах или о том, как начать работу с планом.',
+      text: "Hi! I'm Coach Agent. I've analysed your screen time data. Ask me about the results or how to get started with your plan.",
       ts: Date.now(),
     }];
   });
@@ -75,7 +75,7 @@ export function ChatPage({ sessionId, initialMessages, onMessagesUpdate, initial
       const errMsg: ChatMessage = {
         id: nextId(),
         role: 'coach',
-        text: `Ошибка связи с Coach Agent: ${err instanceof Error ? err.message : 'неизвестно'}`,
+        text: `Error communicating with Coach Agent: ${err instanceof Error ? err.message : 'unknown error'}`,
         ts: Date.now(),
       };
       setMessages(m => [...m, errMsg]);
@@ -92,10 +92,10 @@ export function ChatPage({ sessionId, initialMessages, onMessagesUpdate, initial
   }
 
   const SUGGESTIONS = [
-    'Какие приложения занимают больше всего времени?',
-    'Дай первый шаг для улучшения',
-    'Что значит мой балл перегрузки?',
-    'Как снизить тревогу от соцсетей?',
+    'Which apps take up the most time?',
+    'Give me the first step to improve',
+    'What does my overload score mean?',
+    'How can I reduce social media anxiety?',
   ];
 
   return (
@@ -135,7 +135,7 @@ export function ChatPage({ sessionId, initialMessages, onMessagesUpdate, initial
             <div>
               <p className="text-body" style={{ fontWeight: 600 }}>Coach Agent</p>
               <p className="text-caption">
-                {loading ? 'печатает…' : 'онлайн'}
+                {loading ? 'typing…' : 'online'}
               </p>
             </div>
           </div>
@@ -154,7 +154,7 @@ export function ChatPage({ sessionId, initialMessages, onMessagesUpdate, initial
               <div className="chat-bubble coach">
                 <span className="flex items-center gap-8">
                   <span className="spinner" />
-                  Coach думает…
+                  Coach is thinking…
                 </span>
               </div>
             )}
@@ -191,7 +191,7 @@ export function ChatPage({ sessionId, initialMessages, onMessagesUpdate, initial
             <textarea
               ref={textareaRef}
               className="chat-textarea"
-              placeholder="Напиши Coach Agent…"
+              placeholder="Message Coach Agent…"
               rows={1}
               value={input}
               onChange={e => { setInput(e.target.value); autoResize(); }}
@@ -204,7 +204,7 @@ export function ChatPage({ sessionId, initialMessages, onMessagesUpdate, initial
               onClick={handleSend}
               disabled={!input.trim() || loading}
             >
-              ↑ Отправить
+              ↑ Send
             </button>
           </div>
         </div>

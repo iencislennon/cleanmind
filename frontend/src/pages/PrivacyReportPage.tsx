@@ -20,7 +20,7 @@ export function PrivacyReportPage({ sessionId, cachedReport, onReportLoaded, onS
     if (cachedReport) return;
     api.getPrivacyReport(sessionId)
       .then(r => { setReport(r); onReportLoaded(r); })
-      .catch(e => setError(e instanceof Error ? e.message : 'Ошибка загрузки отчёта'))
+      .catch(e => setError(e instanceof Error ? e.message : 'Failed to load report'))
       .finally(() => setLoading(false));
   }, [sessionId, cachedReport, onReportLoaded]);
 
@@ -30,7 +30,7 @@ export function PrivacyReportPage({ sessionId, cachedReport, onReportLoaded, onS
       await api.endSession(sessionId);
       onSessionEnded();
     } catch (e) {
-      alert(`Ошибка: ${e instanceof Error ? e.message : 'неизвестно'}`);
+      alert(`Error: ${e instanceof Error ? e.message : 'unknown error'}`);
       setEnding(false);
       setShowEndConfirm(false);
     }
@@ -41,7 +41,7 @@ export function PrivacyReportPage({ sessionId, cachedReport, onReportLoaded, onS
       <div className="page">
         <div className="container" style={{ paddingTop: 80, textAlign: 'center' }}>
           <span className="spinner spinner-lg" style={{ display: 'block', margin: '0 auto 24px' }} />
-          <p className="text-body">Загружаем Privacy Report…</p>
+          <p className="text-body">Loading Privacy Report…</p>
         </div>
       </div>
     );
@@ -60,7 +60,7 @@ export function PrivacyReportPage({ sessionId, cachedReport, onReportLoaded, onS
             }}
           >
             <p className="text-body" style={{ color: 'var(--color-red)', fontWeight: 500 }}>
-              ⚠️ {error ?? 'Не удалось загрузить отчёт'}
+              ⚠️ {error ?? 'Could not load the report'}
             </p>
           </div>
         </div>
@@ -91,12 +91,12 @@ export function PrivacyReportPage({ sessionId, cachedReport, onReportLoaded, onS
               className="text-heading-sm"
               style={{ color: report.is_clean ? 'var(--color-blue)' : 'var(--color-red)', marginBottom: 6 }}
             >
-              {report.is_clean ? 'Всё чисто' : 'Обнаружены нарушения'}
+              {report.is_clean ? 'All clear' : 'Violations detected'}
             </p>
             <p className="text-body" style={{ opacity: 0.7 }}>
               {report.is_clean
-                ? 'Guard Agent не зафиксировал нарушений политики приватности в этой сессии.'
-                : `Guard Agent заблокировал ${report.policy_violations_blocked} нарушений политики.`}
+                ? 'Guard Agent recorded no privacy policy violations in this session.'
+                : `Guard Agent blocked ${report.policy_violations_blocked} policy violation(s).`}
             </p>
           </div>
         </div>
@@ -113,12 +113,12 @@ export function PrivacyReportPage({ sessionId, cachedReport, onReportLoaded, onS
         >
           <div className="privacy-stat">
             <span className="privacy-stat-value">{report.events_count}</span>
-            <span className="privacy-stat-label">Событий в журнале</span>
+            <span className="privacy-stat-label">Events logged</span>
           </div>
           <div className="privacy-stat">
             <span className="privacy-stat-value">{report.policy_violations_blocked}</span>
             <span className="privacy-stat-label" style={{ color: report.policy_violations_blocked > 0 ? 'var(--color-red)' : undefined }}>
-              Нарушений заблокировано
+              Violations blocked
             </span>
           </div>
           <div className="privacy-stat">
@@ -126,20 +126,20 @@ export function PrivacyReportPage({ sessionId, cachedReport, onReportLoaded, onS
               className="privacy-stat-value"
               style={{ color: report.raw_data_persisted ? 'var(--color-red)' : 'var(--color-blue)', fontSize: 28 }}
             >
-              {report.raw_data_persisted ? 'Да' : 'Нет'}
+              {report.raw_data_persisted ? 'Yes' : 'No'}
             </span>
-            <span className="privacy-stat-label">Сырые данные сохранены</span>
+            <span className="privacy-stat-label">Raw data persisted</span>
           </div>
           <div className="privacy-stat">
             <span className="privacy-stat-value">{report.external_calls_made.length}</span>
-            <span className="privacy-stat-label">Внешних запросов</span>
+            <span className="privacy-stat-label">External requests</span>
           </div>
         </div>
 
         {/* External calls */}
         <div className="card" style={{ marginBottom: 24 }}>
           <p className="text-body" style={{ fontWeight: 600, marginBottom: 16 }}>
-            Внешние запросы ({report.external_calls_made.length})
+            External requests ({report.external_calls_made.length})
           </p>
           {report.external_calls_made.length === 0 ? (
             <div
@@ -154,7 +154,7 @@ export function PrivacyReportPage({ sessionId, cachedReport, onReportLoaded, onS
             >
               <span style={{ fontSize: 20 }}>✅</span>
               <p className="text-body" style={{ opacity: 0.7 }}>
-                Внешних запросов не было — все вычисления выполнены локально.
+                No external requests — all computations were performed locally.
               </p>
             </div>
           ) : (
@@ -180,7 +180,7 @@ export function PrivacyReportPage({ sessionId, cachedReport, onReportLoaded, onS
 
         {/* Session ID */}
         <div className="card" style={{ marginBottom: 24 }}>
-          <p className="text-body" style={{ fontWeight: 600, marginBottom: 8 }}>Идентификатор сессии</p>
+          <p className="text-body" style={{ fontWeight: 600, marginBottom: 8 }}>Session ID</p>
           <code
             style={{
               fontFamily: 'monospace',
@@ -202,13 +202,13 @@ export function PrivacyReportPage({ sessionId, cachedReport, onReportLoaded, onS
         {!showEndConfirm ? (
           <div className="btn-pair">
             <button className="btn btn-yellow" onClick={() => window.location.reload()}>
-              Начать заново
+              Start over
             </button>
             <button
               className="btn btn-ghost-red"
               onClick={() => setShowEndConfirm(true)}
             >
-              🗑 Завершить сессию и удалить данные
+              🗑 End session & delete data
             </button>
           </div>
         ) : (
@@ -221,10 +221,10 @@ export function PrivacyReportPage({ sessionId, cachedReport, onReportLoaded, onS
             }}
           >
             <p className="text-body" style={{ fontWeight: 600, marginBottom: 8 }}>
-              Подтвердить завершение?
+              Confirm ending session?
             </p>
             <p className="text-caption" style={{ marginBottom: 20, fontSize: 14 }}>
-              Guard Agent сотрёт все данные сессии из памяти. Это действие необратимо.
+              Guard Agent will erase all session data from memory. This action is irreversible.
             </p>
             <div className="btn-pair">
               <button
@@ -232,14 +232,14 @@ export function PrivacyReportPage({ sessionId, cachedReport, onReportLoaded, onS
                 disabled={ending}
                 onClick={handleEndSession}
               >
-                {ending ? <span className="flex items-center gap-8"><span className="spinner" />Удаляем…</span> : 'Да, удалить данные'}
+                {ending ? <span className="flex items-center gap-8"><span className="spinner" />Deleting…</span> : 'Yes, delete data'}
               </button>
               <button
                 className="btn btn-ghost"
                 disabled={ending}
                 onClick={() => setShowEndConfirm(false)}
               >
-                Отмена
+                Cancel
               </button>
             </div>
           </div>

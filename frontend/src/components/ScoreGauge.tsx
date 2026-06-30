@@ -12,10 +12,10 @@ function severityColor(score: number): string {
 }
 
 function severityLabel(score: number): string {
-  if (score <= 30) return 'Под контролем';
-  if (score <= 55) return 'Умеренно';
-  if (score <= 75) return 'Высокий';
-  return 'Критический';
+  if (score <= 30) return 'In Control';
+  if (score <= 55) return 'Moderate';
+  if (score <= 75) return 'High';
+  return 'Critical';
 }
 
 export function ScoreGauge({ score, size = 220, strokeWidth = 18 }: ScoreGaugeProps) {

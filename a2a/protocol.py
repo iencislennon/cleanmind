@@ -25,6 +25,7 @@ import httpx
 from fastapi import APIRouter, HTTPException
 from google.adk.agents import Agent
 from google.adk.runners import InMemoryRunner
+from google.genai import types as genai_types
 
 from a2a.messages import A2AResult, A2ATask, AgentName, TaskStatus
 from a2a.registry import A2A_HEALTH_ENDPOINT, A2A_TASK_ENDPOINT, get_agent_url
@@ -154,10 +155,14 @@ def build_a2a_router(agent: Agent, agent_name: AgentName) -> APIRouter:
             # session_id из A2ATask используется как идентификатор ADK-сессии,
             # чтобы Guard Agent мог сопоставить вызовы LLM с конкретной сессией.
             final_response_text = ""
+            content = genai_types.Content(
+                role="user",
+                parts=[genai_types.Part(text=task.payload)],
+            )
             async for event in runner.run_async(
                 user_id=task.session_id,
                 session_id=task.session_id,
-                new_message=task.payload,
+                new_message=content,
             ):
                 if event.is_final_response() and event.content and event.content.parts:
                     final_response_text = event.content.parts[0].text or ""

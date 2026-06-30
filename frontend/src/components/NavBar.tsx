@@ -7,10 +7,10 @@ interface NavBarProps {
 }
 
 const NAV_ITEMS: { label: string; view: AppView }[] = [
-  { label: 'Анализ', view: 'dashboard' },
-  { label: 'Чат с Coach', view: 'chat' },
+  { label: 'Analysis', view: 'dashboard' },
+  { label: 'Chat with Coach', view: 'chat' },
   { label: 'Plan Steps', view: 'plan' },
-  { label: 'Приватность', view: 'privacy' },
+  { label: 'Privacy', view: 'privacy' },
 ];
 
 export function NavBar({ currentView, sessionId, onNavigate }: NavBarProps) {
@@ -41,10 +41,10 @@ export function NavBar({ currentView, sessionId, onNavigate }: NavBarProps) {
       {canNavigate && (
         <div className="nav-actions">
           <button className="btn btn-ghost btn-sm" onClick={() => onNavigate('privacy')}>
-            🔒 Отчёт
+            🔒 Report
           </button>
           <button className="btn btn-black btn-sm" onClick={() => onNavigate('upload')}>
-            Новый файл
+            New File
           </button>
         </div>
       )}

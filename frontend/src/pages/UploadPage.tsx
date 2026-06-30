@@ -9,10 +9,10 @@ interface UploadPageProps {
 }
 
 const SOURCES: { value: DataSource; label: string; icon: string; hint: string }[] = [
-  { value: 'apple_screen_time', label: 'Apple Screen Time', icon: '🍎', hint: 'Настройки → Экранное время → Экспорт' },
-  { value: 'google_digital_wellbeing', label: 'Google Wellbeing', icon: '🤖', hint: 'Настройки → Цифровое благополучие → Экспорт' },
-  { value: 'tiktok_export', label: 'TikTok Export', icon: '🎵', hint: 'Профиль → Настройки → Конфиденциальность → Данные' },
-  { value: 'instagram_export', label: 'Instagram Export', icon: '📷', hint: 'Настройки → Безопасность → Загрузить данные' },
+  { value: 'apple_screen_time', label: 'Apple Screen Time', icon: '🍎', hint: 'Settings → Screen Time → Export' },
+  { value: 'google_digital_wellbeing', label: 'Google Wellbeing', icon: '🤖', hint: 'Settings → Digital Wellbeing → Export' },
+  { value: 'tiktok_export', label: 'TikTok Export', icon: '🎵', hint: 'Profile → Settings → Privacy → Data' },
+  { value: 'instagram_export', label: 'Instagram Export', icon: '📷', hint: 'Settings → Security → Download Data' },
 ];
 
 export function UploadPage({ onSessionStarted, onPipelineComplete, onError }: UploadPageProps) {
@@ -52,7 +52,7 @@ export function UploadPage({ onSessionStarted, onPipelineComplete, onError }: Up
       });
       onPipelineComplete(session_id, result);
     } catch (err) {
-      onError(err instanceof Error ? err.message : 'Неизвестная ошибка');
+      onError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
       setPhase('idle');
@@ -62,8 +62,8 @@ export function UploadPage({ onSessionStarted, onPipelineComplete, onError }: Up
   const canSubmit = source !== null && file !== null && !loading;
 
   const phaseLabel =
-    phase === 'session' ? 'Создаём сессию…'
-    : phase === 'pipeline' ? 'Анализируем данные… (до 30 сек)'
+    phase === 'session' ? 'Creating session…'
+    : phase === 'pipeline' ? 'Analyzing data… (up to 30 sec)'
     : '';
 
   return (
@@ -72,13 +72,13 @@ export function UploadPage({ onSessionStarted, onPipelineComplete, onError }: Up
         {/* Hero */}
         <div className="text-center" style={{ marginBottom: 64 }}>
           <h1 className="text-heading" style={{ marginBottom: 16 }}>
-            Узнай свой уровень<br />
+            Discover your level of<br />
             <span style={{ background: 'var(--color-yellow)', borderRadius: 8, padding: '0 12px', display: 'inline-block' }}>
-              информационной перегрузки
+              information overload
             </span> 🧠
           </h1>
           <p className="text-subheading" style={{ marginTop: 20, maxWidth: 520, margin: '20px auto 0' }}>
-            Загрузи экспорт данных экранного времени — Coach Agent оценит нагрузку и предложит персональный план.
+            Upload your screen time export — Coach Agent will assess the load and suggest a personalised plan.
           </p>
         </div>
 
@@ -88,7 +88,7 @@ export function UploadPage({ onSessionStarted, onPipelineComplete, onError }: Up
           {/* Source selector */}
           <div style={{ marginBottom: 32 }}>
             <p className="text-body" style={{ fontWeight: 500, marginBottom: 16 }}>
-              1. Выбери источник данных
+              1. Choose your data source
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {SOURCES.map(({ value, label, icon, hint }) => (
@@ -119,7 +119,7 @@ export function UploadPage({ onSessionStarted, onPipelineComplete, onError }: Up
           {/* Drop zone */}
           <div style={{ marginBottom: 32 }}>
             <p className="text-body" style={{ fontWeight: 500, marginBottom: 16 }}>
-              2. Загрузи файл
+              2. Upload your file
             </p>
             <div
               className={`drop-zone${dragOver ? ' drag-over' : ''}${file ? ' has-file' : ''}`}
@@ -139,12 +139,12 @@ export function UploadPage({ onSessionStarted, onPipelineComplete, onError }: Up
                 <div className="flex flex-col items-center gap-12">
                   <span style={{ fontSize: 36 }}>📄</span>
                   <p className="text-body" style={{ fontWeight: 500 }}>{file.name}</p>
-                  <p className="text-caption">{(file.size / 1024).toFixed(1)} KB · нажми, чтобы заменить</p>
+                  <p className="text-caption">{(file.size / 1024).toFixed(1)} KB · click to replace</p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-12">
                   <span style={{ fontSize: 40 }}>☁️</span>
-                  <p className="text-body" style={{ fontWeight: 500 }}>Перетащи файл или нажми для выбора</p>
+                  <p className="text-body" style={{ fontWeight: 500 }}>Drag & drop a file or click to browse</p>
                   <p className="text-caption">.json, .csv, .xml, .zip, .txt</p>
                 </div>
               )}
@@ -159,18 +159,18 @@ export function UploadPage({ onSessionStarted, onPipelineComplete, onError }: Up
                   <span className="spinner" />
                   {phaseLabel}
                 </span>
-              ) : 'Анализировать →'}
+              ) : 'Analyze →'}
             </button>
             <button className="btn btn-black" disabled={loading} onClick={() => { setFile(null); setSource(null); }}>
-              Сброс
+              Reset
             </button>
           </div>
         </div>
 
         {/* Privacy note */}
         <p className="text-caption text-center" style={{ marginTop: 32, maxWidth: 480, margin: '32px auto 0' }}>
-          🔒 Данные обрабатываются в рамках одной сессии и не сохраняются после её завершения.
-          Guard Agent ведёт аудит всех операций.
+          🔒 Data is processed within a single session and is not retained after it ends.
+          Guard Agent audits all operations.
         </p>
       </div>
     </div>

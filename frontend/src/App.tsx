@@ -43,7 +43,7 @@ function ProcessingOverlay({ message }: { message: string }) {
         style={{ textAlign: 'center', padding: '48px 56px', maxWidth: 420 }}
       >
         <span className="spinner spinner-lg" style={{ display: 'block', margin: '0 auto 24px' }} />
-        <p className="text-heading-sm" style={{ marginBottom: 8 }}>Анализируем данные</p>
+        <p className="text-heading-sm" style={{ marginBottom: 8 }}>Analyzing your data</p>
         <p className="text-subheading">{message}</p>
       </div>
     </div>
@@ -105,7 +105,7 @@ export default function App() {
   function handleSessionStarted(sessionId: string) {
     setState(s => ({ ...s, sessionId, view: 'upload' }));
     setProcessing(true);
-    setProcessingMessage('Guard Agent проверяет данные…');
+    setProcessingMessage('Guard Agent is validating your data…');
   }
 
   function handlePipelineComplete(sessionId: string, result: PipelineStatusResponse) {

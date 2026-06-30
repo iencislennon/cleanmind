@@ -19,7 +19,7 @@ function StatusBanner({ result }: { result: PipelineStatusResponse }) {
         }}
       >
         <p className="text-body" style={{ color: 'var(--color-red)', fontWeight: 500 }}>
-          ⚠️ {result.error_message ?? 'Конвейер завершился с ошибкой. Попробуй другой файл.'}
+          ⚠️ {result.error_message ?? 'Pipeline finished with an error. Try a different file.'}
         </p>
       </div>
     );
@@ -65,7 +65,7 @@ export function DashboardPage({ pipelineResult, onNavigate }: DashboardPageProps
                     }}
                   >
                     <p className="text-caption" style={{ textAlign: 'center', padding: 20 }}>
-                      Оценка недоступна
+                      Score unavailable
                     </p>
                   </div>
                 </div>
@@ -75,23 +75,23 @@ export function DashboardPage({ pipelineResult, onNavigate }: DashboardPageProps
             {/* Quick stats */}
             <div style={{ flex: 1, minWidth: 260 }}>
               <h2 className="text-heading-sm" style={{ marginBottom: 8 }}>
-                {hasScore && score > 75 ? 'Нужно действовать' :
-                 hasScore && score > 55 ? 'Есть над чем работать' :
-                 hasScore && score > 30 ? 'Умеренная нагрузка' :
-                 hasScore ? 'Хороший баланс' : 'Анализ завершён'}
+                {hasScore && score > 75 ? 'Action needed' :
+                 hasScore && score > 55 ? 'Room for improvement' :
+                 hasScore && score > 30 ? 'Moderate load' :
+                 hasScore ? 'Good balance' : 'Analysis complete'}
               </h2>
               <p className="text-subheading">
                 {pipelineResult.status === 'completed'
-                  ? 'Конвейер завершил анализ данных. Coach Agent подготовил рекомендации.'
-                  : `Статус: ${pipelineResult.status}`}
+                  ? 'The pipeline has finished analysing your data. Coach Agent has prepared recommendations.'
+                  : `Status: ${pipelineResult.status}`}
               </p>
 
               <div style={{ display: 'flex', gap: 12, marginTop: 32, flexWrap: 'wrap' }}>
                 <button className="btn btn-yellow" onClick={() => onNavigate('chat')}>
-                  Поговорить с Coach →
+                  Talk to Coach →
                 </button>
                 <button className="btn btn-black" onClick={() => onNavigate('plan')}>
-                  Посмотреть план
+                  View plan
                 </button>
               </div>
             </div>
@@ -119,7 +119,7 @@ export function DashboardPage({ pipelineResult, onNavigate }: DashboardPageProps
               </span>
               <div>
                 <p className="text-body" style={{ fontWeight: 600 }}>Coach Agent</p>
-                <p className="text-caption">Первичный анализ</p>
+                <p className="text-caption">Initial analysis</p>
               </div>
             </div>
             <div
@@ -137,10 +137,10 @@ export function DashboardPage({ pipelineResult, onNavigate }: DashboardPageProps
             </div>
             <div className="btn-pair" style={{ marginTop: 24 }}>
               <button className="btn btn-yellow btn-sm" onClick={() => onNavigate('chat')}>
-                Задать вопрос Coach
+                Ask Coach a question
               </button>
               <button className="btn btn-black btn-sm" onClick={() => onNavigate('plan')}>
-                Перейти к шагам плана
+                Go to plan steps
               </button>
             </div>
           </div>
@@ -161,8 +161,8 @@ export function DashboardPage({ pipelineResult, onNavigate }: DashboardPageProps
             onMouseLeave={e => (e.currentTarget.style.transform = '')}
           >
             <span style={{ fontSize: 32, display: 'block', marginBottom: 12 }}>💬</span>
-            <p className="text-body" style={{ fontWeight: 600, marginBottom: 6 }}>Чат с Coach</p>
-            <p className="text-caption">Задавай вопросы, получай советы</p>
+            <p className="text-body" style={{ fontWeight: 600, marginBottom: 6 }}>Chat with Coach</p>
+            <p className="text-caption">Ask questions and get advice</p>
           </button>
 
           <button
@@ -178,8 +178,8 @@ export function DashboardPage({ pipelineResult, onNavigate }: DashboardPageProps
             onMouseLeave={e => (e.currentTarget.style.transform = '')}
           >
             <span style={{ fontSize: 32, display: 'block', marginBottom: 12 }}>📋</span>
-            <p className="text-body" style={{ fontWeight: 600, marginBottom: 6 }}>Шаги плана</p>
-            <p className="text-caption">Принимай или отклоняй рекомендации</p>
+            <p className="text-body" style={{ fontWeight: 600, marginBottom: 6 }}>Plan Steps</p>
+            <p className="text-caption">Accept or decline recommendations</p>
           </button>
 
           <button
@@ -196,7 +196,7 @@ export function DashboardPage({ pipelineResult, onNavigate }: DashboardPageProps
           >
             <span style={{ fontSize: 32, display: 'block', marginBottom: 12 }}>🔒</span>
             <p className="text-body" style={{ fontWeight: 600, marginBottom: 6 }}>Privacy Report</p>
-            <p className="text-caption">Аудит всех операций с твоими данными</p>
+            <p className="text-caption">Audit of all operations on your data</p>
           </button>
         </div>
       </div>

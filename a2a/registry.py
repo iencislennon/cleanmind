@@ -16,10 +16,19 @@ import os
 from a2a.messages import AgentName
 
 
+_LOCAL_PATH_PREFIX: dict[AgentName, str] = {
+    AgentName.PARSER: "/agents/parser",
+    AgentName.ANALYZER: "/agents/analyzer",
+    AgentName.COACH: "/agents/coach",
+    AgentName.GUARD: "/agents/guard",
+}
+
+
 def _resolve_agent_url(agent: AgentName, default_port_env: str) -> str:
     """
-    Определяет URL агента: сначала смотрит на явный *_AGENT_URL (для Cloud Run),
-    затем падает обратно на localhost:<порт из .env> для локальной разработки.
+    Determines the agent URL: first checks for an explicit *_URL env var (Cloud Run),
+    then falls back to localhost:<port> + path prefix for local single-process mode.
+    In Cloud Run each agent is a separate service at its own root, so no prefix is needed.
     """
     url_env_key = f"{agent.value.upper()}_URL"
     explicit_url = os.getenv(url_env_key)
@@ -27,11 +36,12 @@ def _resolve_agent_url(agent: AgentName, default_port_env: str) -> str:
         return explicit_url.rstrip("/")
 
     port = os.getenv(default_port_env, "8000")
-    return f"http://localhost:{port}"
+    path_prefix = _LOCAL_PATH_PREFIX.get(agent, "")
+    return f"http://localhost:{port}{path_prefix}"
 
 
 def get_agent_url(agent: AgentName) -> str:
-    """Возвращает базовый URL для агента — единая точка входа для A2A клиента."""
+    """Returns the base URL for an agent — single entry point for the A2A client."""
     port_env_map = {
         AgentName.PARSER: "PARSER_AGENT_PORT",
         AgentName.ANALYZER: "ANALYZER_AGENT_PORT",

@@ -21,7 +21,8 @@ import logging
 import os
 
 from google.adk.agents import Agent
-from google.adk.tools.mcp_tool import MCPToolset, StdioServerParameters
+from google.adk.tools.mcp_tool import MCPToolset, StdioConnectionParams
+from mcp import StdioServerParameters
 
 from mcp_server.models import DataSource
 
@@ -44,9 +45,11 @@ def build_mcp_toolset() -> MCPToolset:
     функции, которые агент может вызывать.
     """
     return MCPToolset(
-        connection_params=StdioServerParameters(
-            command="python",
-            args=["-m", "mcp_server.server"],
+        connection_params=StdioConnectionParams(
+            server_params=StdioServerParameters(
+                command="python",
+                args=["-m", "mcp_server.server"],
+            )
         )
     )
 
