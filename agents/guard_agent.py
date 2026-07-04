@@ -21,12 +21,13 @@ request_consent_tool перед тем как передать данные в M
 from __future__ import annotations
 
 import logging
-import os
 import re
 import uuid
 
 from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
+
+from agents.model_utils import get_model
 
 from agents.guard_models import (
     AuditEvent,
@@ -37,8 +38,6 @@ from agents.guard_models import (
 from agents.security_policies import run_full_security_audit
 
 logger = logging.getLogger("clearmind.guard_agent")
-
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 
 # In-memory хранилище отчётов по сессиям. Намеренно in-memory (не БД) —
 # отчёт живёт ровно столько, сколько сессия, и исчезает вместе с процессом,
@@ -230,7 +229,7 @@ def build_guard_agent() -> Agent:
     """Собирает Guard Agent со всеми security/privacy tools."""
     agent = Agent(
         name="guard_agent",
-        model=GEMINI_MODEL,
+        model=get_model(),
         instruction=GUARD_AGENT_INSTRUCTION,
         tools=[
             log_audit_event_function_tool,

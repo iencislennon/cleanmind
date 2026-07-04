@@ -87,14 +87,28 @@ class A2AClient:
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.post(url, json=task.model_dump(mode="json"))
-                response.raise_for_status()
+                if response.status_code >= 400:
+                    body = response.text[:500]
+                    logger.error("A2A: HTTP %s от %s: %s", response.status_code, recipient.value, body)
+                    return A2AResult(
+                        task_id=task.task_id,
+                        status=TaskStatus.FAILED,
+                        error_message=f"HTTP {response.status_code} from {recipient.value}: {body}",
+                    )
                 result = A2AResult.model_validate(response.json())
         except httpx.HTTPError as exc:
-            logger.error("A2A: ошибка при вызове %s: %s", recipient.value, exc)
+            logger.error("A2A: network error calling %s: %s", recipient.value, exc)
             return A2AResult(
                 task_id=task.task_id,
                 status=TaskStatus.FAILED,
-                error_message=f"Сетевая ошибка при обращении к {recipient.value}: {exc}",
+                error_message=f"Network error calling {recipient.value}: {exc}",
+            )
+        except Exception as exc:
+            logger.error("A2A: unexpected error calling %s: %s", recipient.value, exc, exc_info=True)
+            return A2AResult(
+                task_id=task.task_id,
+                status=TaskStatus.FAILED,
+                error_message=f"Unexpected error calling {recipient.value}: {exc}",
             )
 
         logger.info(
@@ -173,12 +187,13 @@ def build_a2a_router(agent: Agent, agent_name: AgentName) -> APIRouter:
                 status=TaskStatus.COMPLETED,
                 result_payload=final_response_text,
             )
-        except Exception as exc:  # noqa: BLE001 — нужно поймать всё, чтобы вернуть A2AResult
-            logger.exception("A2A сервер [%s]: ошибка обработки задачи", agent_name.value)
+        except Exception as exc:  # noqa: BLE001
+            error_detail = repr(exc) or type(exc).__name__
+            logger.exception("A2A server [%s]: task processing error: %s", agent_name.value, error_detail)
             return A2AResult(
                 task_id=task.task_id,
                 status=TaskStatus.FAILED,
-                error_message=str(exc),
+                error_message=error_detail,
             )
 
     return router
@@ -194,53 +209,81 @@ async def run_full_pipeline(
     raw_file_payload: str,
 ) -> A2AResult:
     """
-    Запускает полный конвейер Parser -> Guard (consent) -> Analyzer -> Coach
-    через A2A, от лица оркестратора (используется api/main.py).
+    Pipeline: parse (direct) -> analyze (direct) -> coach (LLM via A2A).
 
-    Каждый шаг — отдельный A2A вызов, поэтому если какой-то агент развёрнут
-    отдельно (Cloud Run), вызывающему коду (FastAPI backend) ничего менять
-    не нужно — он просто видит A2AClient.
+    Parsing and scoring are deterministic Python — no LLM needed, no subprocess.
+    Only the coach step calls the LLM.
     """
-    client = A2AClient(sender=AgentName.GUARD)  # backend выступает от имени Guard как координатора входа
-
-    # Шаг 1: Guard регистрирует consent gate и проверяет файл ДО парсинга
-    guard_pre_check = await client.send_task(
-        recipient=AgentName.GUARD,
-        task_type="pre_parse_check",
-        payload=raw_file_payload,
-        session_id=session_id,
+    import json as _json
+    import uuid as _uuid
+    from agents.guard_agent import (
+        log_audit_event_tool,
+        request_consent_tool,
+        run_security_audit_tool,
     )
-    if guard_pre_check.status != TaskStatus.COMPLETED:
-        return guard_pre_check
+    from agents.guard_models import AuditEventType
+    from agents.analyzer_agent import compute_overload_score
+    from mcp_server.models import DataSource
+    from mcp_server.parsers import parse
+    import base64
 
-    # Шаг 2: Parser Agent читает и нормализует файл
-    parser_client = A2AClient(sender=AgentName.PARSER)
-    parse_result = await parser_client.send_task(
-        recipient=AgentName.PARSER,
-        task_type="parse_file",
-        payload=raw_file_payload,
+    task_id = str(_uuid.uuid4())[:8]
+
+    # Step 1: Guard — register consent + security audit (direct tool calls, no LLM)
+    request_consent_tool(
         session_id=session_id,
+        gate_id=f"consent_{session_id}",
+        description="User consents to processing their screen-time export.",
+        required_before="parse_file",
     )
-    if parse_result.status != TaskStatus.COMPLETED or not parse_result.result_payload:
-        return parse_result
+    log_audit_event_tool(session_id, AuditEventType.FILE_RECEIVED.value, "File received for processing", "raw_file")
 
-    # Шаг 3: Analyzer Agent считает Overload Score
-    analyzer_client = A2AClient(sender=AgentName.ANALYZER)
-    analysis_result = await analyzer_client.send_task(
-        recipient=AgentName.ANALYZER,
-        task_type="analyze_usage",
-        payload=parse_result.result_payload,
+    payload_dict = _json.loads(raw_file_payload)
+    file_size = len(base64.b64decode(payload_dict.get("file_content_base64", "")))
+    audit_result = _json.loads(run_security_audit_tool(
         session_id=session_id,
-    )
-    if analysis_result.status != TaskStatus.COMPLETED or not analysis_result.result_payload:
-        return analysis_result
+        file_size_bytes=file_size,
+        payload_sent_to_llm_json="{}",
+        outbound_domains_csv="",
+    ))
+    if not audit_result.get("all_passed", True):
+        return A2AResult(
+            task_id=task_id,
+            status=TaskStatus.FAILED,
+            error_message=f"Security audit failed: {audit_result.get('checks')}",
+        )
 
-    # Шаг 4: Coach Agent готовит стартовое сообщение диалога с планом
+    # Step 2: Parse (direct, no LLM)
+    try:
+        source = DataSource(payload_dict["source"])
+        raw_bytes = base64.b64decode(payload_dict["file_content_base64"])
+        parse_result = parse(source, raw_bytes)
+    except Exception as exc:
+        return A2AResult(task_id=task_id, status=TaskStatus.FAILED, error_message=f"Parse error: {exc}")
+
+    if not parse_result.success or parse_result.data is None:
+        return A2AResult(
+            task_id=task_id,
+            status=TaskStatus.FAILED,
+            error_message=parse_result.error_message or "File parsing failed — check file format.",
+        )
+
+    log_audit_event_tool(session_id, AuditEventType.FILE_PARSED.value, "File parsed successfully", "normalized_data")
+
+    # Step 3: Analyze (direct, no LLM)
+    try:
+        analysis = compute_overload_score(parse_result.data)
+    except Exception as exc:
+        return A2AResult(task_id=task_id, status=TaskStatus.FAILED, error_message=f"Analysis error: {exc}")
+
+    log_audit_event_tool(session_id, AuditEventType.DATA_SENT_TO_AGENT.value, "Analysis result sent to Coach", "analysis_result")
+
+    # Step 4: Coach — LLM conversation start (A2A)
     coach_client = A2AClient(sender=AgentName.COACH)
     coach_result = await coach_client.send_task(
         recipient=AgentName.COACH,
         task_type="start_conversation",
-        payload=analysis_result.result_payload,
+        payload=analysis.model_dump_json(),
         session_id=session_id,
     )
     return coach_result

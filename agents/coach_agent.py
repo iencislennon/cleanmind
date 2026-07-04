@@ -17,19 +17,16 @@ plan_builder.py, и реализует human-in-the-loop: каждый шаг п
 from __future__ import annotations
 
 import logging
-import os
 
 from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
 
+from agents.model_utils import get_model
 from agents.analyzer_models import AnalysisResult
 from agents.coach_models import DetoxPlan, StepStatus
 from agents.plan_builder import build_detox_plan
 
 logger = logging.getLogger("clearmind.coach_agent")
-
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
-
 
 # ──────────────────────────────────────────────────────────────────
 # ADK Tools — детерминированные операции, которые LLM-агент вызывает
@@ -120,7 +117,7 @@ def build_coach_agent() -> Agent:
     """Собирает Coach Agent с tools для построения плана и human-in-the-loop апдейтов."""
     agent = Agent(
         name="coach_agent",
-        model=GEMINI_MODEL,
+        model=get_model(),
         instruction=COACH_AGENT_INSTRUCTION,
         tools=[create_plan_function_tool, update_step_status_function_tool],
         description=(

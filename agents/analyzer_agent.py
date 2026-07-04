@@ -18,19 +18,16 @@ A2A протокол (см. a2a/protocol.py), то есть управляет �
 from __future__ import annotations
 
 import logging
-import os
 
 from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
 
+from agents.model_utils import get_model
 from agents.analyzer_models import AnalysisResult
 from agents.pattern_detectors import ALL_DETECTORS, top_apps_by_duration
 from mcp_server.models import NormalizedUsageData
 
 logger = logging.getLogger("clearmind.analyzer_agent")
-
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
-
 
 # ──────────────────────────────────────────────────────────────────
 # Чистая функция расчёта — НЕ зависит от LLM, полностью детерминирована
@@ -89,14 +86,24 @@ def _fallback_summary(overload_score: int, severity_label: str, patterns: list) 
 
 def analyze_usage_tool(usage_data_json: str) -> str:
     """
-    ADK Tool: принимает JSON-строку NormalizedUsageData, возвращает
-    JSON-строку AnalysisResult.
-
-    Названо как tool (а не как внутренний метод) специально — это то,
-    что объявлено в Gemini function-calling схеме агента и то, что
-    видно в логах вызовов при демонстрации на видео.
+    ADK Tool: принимает JSON-строку NormalizedUsageData (или ParseResult wrapper),
+    возвращает JSON-строку AnalysisResult.
     """
-    data = NormalizedUsageData.model_validate_json(usage_data_json)
+    import json as _json
+    from mcp_server.models import ParseResult
+
+    # The parser agent may return a ParseResult wrapper — unwrap it
+    raw = _json.loads(usage_data_json)
+    if "success" in raw:
+        parse_result = ParseResult.model_validate(raw)
+        if not parse_result.success or parse_result.data is None:
+            error = parse_result.error_message or "File parsing failed — no data available"
+            logger.error("Analyzer: parser returned failure: %s", error)
+            return _json.dumps({"error": error})
+        data = parse_result.data
+    else:
+        data = NormalizedUsageData.model_validate(raw)
+
     result = compute_overload_score(data)
     logger.info(
         "Analyzer: score=%d severity=%s patterns=%d",
@@ -138,7 +145,7 @@ def build_analyzer_agent() -> Agent:
     """Собирает Analyzer Agent — orchestrator с детерминированным tool'ом анализа."""
     agent = Agent(
         name="analyzer_agent",
-        model=GEMINI_MODEL,
+        model=get_model(),
         instruction=ANALYZER_AGENT_INSTRUCTION,
         tools=[analyze_usage_function_tool],
         description=(
