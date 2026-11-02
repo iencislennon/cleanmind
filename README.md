@@ -1,94 +1,80 @@
 # ClearMind — Information Overload Shield
 
-> Мультиагентная система для выявления и устранения информационной перегрузки у молодёжи 16–25 лет.
+A privacy-first multi-agent system that reads device usage exports, detects overload patterns and proposes a personalised 7-day digital-detox plan for users aged 16–25.
 
-## Проблема
+## Why this exists
 
-Молодой человек потребляет 7–9 часов контента в день. Он не замечает перегрузку в моменте — но через 2–3 недели появляются тревожность и неспособность сосредоточиться. Ни одно приложение не объясняет *почему* это происходит и что именно менять.
+Young people consume many hours of content per day and rarely notice overload as it happens. Existing apps report screen time but do not explain which patterns cause the problem or what to change. ClearMind parses real exports (Apple Screen Time, Google Digital Wellbeing, TikTok and Instagram data downloads), scores overload and keeps a human in the loop for every step of the plan.
 
-## Решение
-
-ClearMind читает **реальные экспорты** данных устройства (Apple Screen Time, Google Digital Wellbeing, TikTok/Instagram Data Download), выявляет токсичные паттерны потребления и предлагает персонализированный 7-дневный план цифровой детоксикации.
-
-## Архитектура
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│                   Frontend                       │
-│              (React + Refero UI)                 │
-└────────────────────┬────────────────────────────┘
-                     │ HTTP / WebSocket
-┌────────────────────▼────────────────────────────┐
-│              FastAPI Backend                     │
-│                 (api/main.py)                    │
-└──┬─────────────┬──────────────┬─────────────────┘
-   │ A2A         │ A2A          │ A2A
-┌──▼──────┐ ┌───▼──────┐ ┌────▼──────┐ ┌──────────┐
-│ Parser  │ │Analyzer  │ │  Coach   │ │  Guard   │
-│ Agent   │ │ Agent    │ │  Agent   │ │  Agent   │
-│ :8010   │ │ :8011    │ │  :8012   │ │  :8013   │
-└──┬──────┘ └──────────┘ └──────────┘ └──────────┘
-   │ MCP
-┌──▼──────────────────────────────────────────────┐
-│              MCP Server :8001                    │
-│     (парсинг Screen Time, Digital Wellbeing,     │
-│      TikTok JSON, Instagram JSON)                │
-└─────────────────────────────────────────────────┘
+Frontend (React + Vite)
+        │ HTTP
+FastAPI backend (api/main.py)
+        │ A2A
+┌───────┼──────────┬──────────┐
+Parser  Analyzer   Coach      Guard
+Agent   Agent      Agent      Agent
+        │
+MCP server (export parsers)
 ```
 
-### Агенты
+| Agent | Role |
+|-------|------|
+| Parser | Reads and normalises exports through the MCP server |
+| Analyzer | Orchestrates, detects patterns, computes the Overload Score |
+| Coach | Conversational agent that builds the detox plan with user approval |
+| Guard | Checks consent gates and that no raw data is persisted |
 
-| Агент | Порт | Роль |
-|-------|------|------|
-| `Parser Agent` | 8010 | Читает и нормализует экспорты данных через MCP |
-| `Analyzer Agent` | 8011 | Orchestrator — выявляет паттерны, считает Overload Score |
-| `Coach Agent` | 8012 | Conversational — диалог с пользователем, план детокса |
-| `Guard Agent` | 8013 | Проверяет приватность, consent gates, local-first |
-
-## Установка
+## Run with Docker
 
 ```bash
-# 1. Клонировать репозиторий
-git clone https://github.com/your-org/clearmind
-cd clearmind
+git clone https://github.com/iencislennon/cleanmind
+cd cleanmind
+cp .env.example .env        # add GEMINI_API_KEY
+docker build -t clearmind .
+docker run --rm -p 8000:8000 --env-file .env clearmind
+curl localhost:8000/health  # {"status":"ok","service":"clearmind-api"}
+```
 
-# 2. Создать виртуальное окружение
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# .venv\Scripts\activate   # Windows
+## Run locally
 
-# 3. Установить зависимости
+```bash
+python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-
-# 4. Настроить переменные окружения
-cp .env.example .env
-# Заполни GEMINI_API_KEY в .env
-
-# 5. Запустить всё локально
+cp .env.example .env        # add GEMINI_API_KEY
 ./scripts/run_local.sh
 ```
 
-## Поддерживаемые форматы данных
+Frontend only: `cd frontend && npm ci && npm run build`.
 
-| Источник | Формат | Как экспортировать |
-|----------|--------|--------------------|
-| Apple Screen Time | XML | Настройки → Экранное время → Экспорт |
-| Google Digital Wellbeing | CSV | Android → Digital Wellbeing → Export data |
-| TikTok | JSON | Профиль → Настройки → Конфиденциальность → Данные |
-| Instagram | JSON | Профиль → Настройки → Ваши данные → Скачать |
+## Supported inputs
 
-## Ключевые концепции курса (Kaggle)
-
-- ✅ **Multi-agent system (ADK)** — 4 агента с A2A протоколом
-- ✅ **MCP Server** — кастомный сервер парсинга экспортов
-- ✅ **Security features** — Guard Agent + local-first + consent gates
-- ✅ **Human-in-the-loop** — пользователь утверждает каждый шаг плана
-- ✅ **Deployability** — Google Cloud Run
+| Source | Format |
+|--------|--------|
+| Apple Screen Time | XML |
+| Google Digital Wellbeing | CSV |
+| TikTok data download | JSON |
+| Instagram data download | JSON |
 
 ## Privacy
 
-Все данные обрабатываются **локально** в рамках сессии. После завершения сессии raw данные не сохраняются — только агрегированные метрики (Overload Score, топ паттерны). Guard Agent проверяет это на каждом шаге.
+Data is processed within a session. When the session ends, raw data is discarded and only aggregated metrics (Overload Score, top patterns) remain. The Guard agent enforces consent gates at each step.
 
-## Лицензия
+## Tests and quality
+
+```bash
+pytest tests/
+```
+
+Status of CI, dependency audit and staging deployment: not yet configured.
+
+## Limitations
+
+- Requires a Gemini API key; there is no offline demo mode yet.
+- Synthetic Screen Time fixtures are not yet included.
+
+## License
 
 MIT
